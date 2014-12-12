@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -75,7 +75,7 @@ public final class VersionManager {
 		Version v1 = this.createNextVersion(this.descriptors.get(v0));
 
 		// Compute program update
-		v1.computeV0V0Update(options.isLazy() || options.isFullyLazy());
+		v1.computeV0V0Update(options.isLazy());
 
 		this.versions.addFirst(v1);
 		this.descriptors.put(v1, this.descriptors.get(v0));
@@ -101,7 +101,7 @@ public final class VersionManager {
 		this.updateClasses.put(v1, options.getUpdateClass());
 
 		// Compute program update
-		v1.computeProgramUpdate(options.getUpdateClass(), options.isFullyLazy() || options.isLazy());
+		v1.computeProgramUpdate(options.getUpdateClass(), options.isLazy());
 
 		this.outdatedClassNames.addAll(this.currentVersionClassNames);
 		this.currentVersionClassNames = new HashSet<>();

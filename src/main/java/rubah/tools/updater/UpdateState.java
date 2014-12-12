@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -37,7 +37,6 @@ public class UpdateState {
 
 	private boolean stopAndGo;
 
-	private boolean fullyLazy;
 	private boolean lazy;
 
 	private MigrationStrategy migrationStrategy;
@@ -96,12 +95,6 @@ public class UpdateState {
 	}
 	public void setMigrationStrategy(MigrationStrategy migrationStrategy) {
 		this.migrationStrategy = migrationStrategy;
-	}
-	public boolean isFullyLazy() {
-		return fullyLazy;
-	}
-	public void setFullyLazy(boolean fullyLazy) {
-		this.fullyLazy = fullyLazy;
 	}
 	public void setLazy(boolean lazy) {
 		this.lazy = lazy;

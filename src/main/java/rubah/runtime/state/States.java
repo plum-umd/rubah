@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -47,7 +47,7 @@ public class States {
 				new MigratingControlFlow(state),
 				new NotUpdating(state)
 				);
-		} else if(state.getOptions().isFullyLazy() || state.getOptions().isLazy()) {
+		} else if(state.getOptions().isLazy()) {
 			states = new States(
 				new InstallingNewVersion(state),
 				new ComputingUpdateMetadata(state),

@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -170,13 +170,10 @@ public class ParsingArguments extends Filter {
 					state.setLazy(true);
 					break;
 				case FULL_LAZY:
-//					migrationStrategy = new FullyLazyWithProxies(mappingStrategy);
 					migrationStrategy = new FullyLazyMonolithic();
-					state.setFullyLazy(true);
 					break;
 				case EAGER_LAZY:
 					migrationStrategy = new EagerLazy(mappingStrategy, this.nThreads);
-					state.setFullyLazy(true);
 					break;
 			}
 

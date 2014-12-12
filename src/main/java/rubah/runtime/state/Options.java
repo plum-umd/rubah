@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -35,7 +35,6 @@ public class Options implements Serializable {
 	private boolean stopAndGo = false;
 	private boolean measureWorkingSet = false;
 	private boolean traversal = false;
-	private boolean fullyLazy = false;
 	private boolean lazy = false;
 	private MigrationStrategy migrationStrategy = new SingleThreaded(new IdentityMapStrategy());
 	private File updatePackage;
@@ -100,15 +99,6 @@ public class Options implements Serializable {
 
 	public Options setMigrationStrategy(MigrationStrategy migrationStrategy) {
 		this.migrationStrategy = migrationStrategy;
-		return this;
-	}
-
-	public boolean isFullyLazy() {
-		return fullyLazy;
-	}
-
-	public Options setFullyLazy(boolean fullyLazy) {
-		this.fullyLazy = fullyLazy;
 		return this;
 	}
 

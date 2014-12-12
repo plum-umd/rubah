@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -45,7 +45,7 @@ public class Updater {
 	public static final PrintStream out;
 	private static final String PORT_PROP = "updatePort";
 	public static final int port;
-	
+
 	static {
 		if (System.getProperty(DISABLE_OUT) != null) {
 			out = new PrintStream(new NullOutputStream());
@@ -81,7 +81,6 @@ public class Updater {
 			.setUpdateClass(updateClass)
 			.setStopAndGo(state.isStopAndGo())
 			.setMigrationStrategy(state.getMigrationStrategy())
-			.setFullyLazy(state.isFullyLazy())
 			.setLazy(state.isLazy());
 		} else {
 			type = Type.v0v1;
@@ -92,10 +91,9 @@ public class Updater {
 			.setUpdateClass(updateClass)
 			.setStopAndGo(state.isStopAndGo())
 			.setMigrationStrategy(state.getMigrationStrategy())
-			.setFullyLazy(state.isFullyLazy())
 			.setLazy(state.isLazy());
 		}
-		
+
 		try (Socket clientSocket = new Socket(InetAddress.getLocalHost(), Updater.port)) {
 	        // Create the input & output streams to the server
 	        ObjectOutputStream outToServer = new ObjectOutputStream(clientSocket.getOutputStream());
@@ -123,7 +121,7 @@ public class Updater {
 		@Override
 		public void run() {
 			try (ServerSocket welcomeSocket = new ServerSocket(port)) {
-				while (true) {    
+				while (true) {
 					// Create the Client Socket
 					try (Socket clientSocket = welcomeSocket.accept()) {
 						out.println("Updater connected...");

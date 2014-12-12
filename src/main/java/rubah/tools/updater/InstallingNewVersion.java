@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -55,7 +55,6 @@ public class InstallingNewVersion extends Filter {
 			.setUpdateClass(updateClass)
 			.setStopAndGo(state.isStopAndGo())
 			.setMigrationStrategy(state.getMigrationStrategy())
-			.setFullyLazy(state.isFullyLazy())
 			.setLazy(state.isLazy());
 		} else {
 			type = Type.v0v1;
@@ -66,10 +65,9 @@ public class InstallingNewVersion extends Filter {
 			.setUpdateClass(updateClass)
 			.setStopAndGo(state.isStopAndGo())
 			.setMigrationStrategy(state.getMigrationStrategy())
-			.setFullyLazy(state.isFullyLazy())
 			.setLazy(state.isLazy());
 		}
-		
+
 		try (Socket clientSocket = new Socket(InetAddress.getLocalHost(), Updater.port)) {
 	        // Create the input & output streams to the server
 	        ObjectOutputStream outToServer = new ObjectOutputStream(clientSocket.getOutputStream());
