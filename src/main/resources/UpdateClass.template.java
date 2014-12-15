@@ -4,11 +4,11 @@ public class UpdateClass implements rubah.ConversionClass {
 
 <#if c.hasNonStaticChanges>
 	public void ${convertName}(${c.v0} o0, ${c.v1} o1) {
-		// New fields<#list c.newFields as f><#if !modifier.isStatic(f.getValue0().getAccess())>
-		o1.${f.getValue0().name} = ${helper.getNullValue(f.getValue0().getType())};</#if></#list>
+		// New fields<#list c.newFields as f><#if !modifier.isStatic(f.f.getAccess())>
+		o1.${f.f.name} = ${helper.getNullValue(f.f.getType())};</#if></#list>
 		
-		// Fields with type changed<#list c.typeChangedFields as f><#if !modifier.isStatic(f.getValue0().getAccess())>
-		o1.${f.getValue0().name} = ${helper.getNullValue(f.getValue0().getType())};</#if></#list>
+		// Fields with type changed<#list c.typeChangedFields as f><#if !modifier.isStatic(f.f.getAccess())>
+		o1.${f.f.name} = ${helper.getNullValue(f.f.getType())};</#if></#list>
 		
 		return;
 	}
@@ -19,14 +19,14 @@ public class UpdateClass implements rubah.ConversionClass {
 	public void ${convertStaticName}(${c.v1} ignore) {
 		${c.v1}.${copyStaticFieldsMethodName}();
 		
-		// New fields<#list c.newFields as f><#if modifier.isStatic(f.getValue0().getAccess())>
-		${c.v1}.${f.getValue0().name} = ${helper.getNullValue(f.getValue0().getType())};</#if></#list>
+		// New fields<#list c.newFields as f><#if modifier.isStatic(f.f.getAccess())>
+		${c.v1}.${f.f.name} = ${helper.getNullValue(f.f.getType())};</#if></#list>
 		
-		// New constants<#list c.newConstants as f><#if modifier.isStatic(f.getValue0().getAccess())>
-		${c.v1}.${f.getValue0().name} = ${helper.getNullValue(f.getValue0().getType())};</#if></#list>
+		// New constants<#list c.newConstants as f><#if modifier.isStatic(f.f.getAccess())>
+		${c.v1}.${f.f.name} = ${helper.getNullValue(f.f.getType())};</#if></#list>
 		
-		// Fields with type changed<#list c.typeChangedFields as f><#if modifier.isStatic(f.getValue0().getAccess())>
-		${c.v1}.${f.getValue0().name} = null;</#if></#list>
+		// Fields with type changed<#list c.typeChangedFields as f><#if modifier.isStatic(f.f.getAccess())>
+		${c.v1}.${f.f.name} = null;</#if></#list>
 	}
 </#if>
 </#list>

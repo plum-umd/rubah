@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -26,12 +26,9 @@ import java.util.Map;
 import rubah.framework.Clazz;
 import rubah.framework.Method;
 
-import org.javatuples.Pair;
-
 public class MethodNameAndSignatureMapper implements Mapper<Method> {
 
-	private Map<Pair<String, String>, Method> methodMap =
-			new HashMap<Pair<String,String>, Method>();
+	private Map<String, Method> methodMap = new HashMap<>();
 
 	public MethodNameAndSignatureMapper(Clazz c0) {
 		for (Method m : c0.getMethods()) {
@@ -39,10 +36,11 @@ public class MethodNameAndSignatureMapper implements Mapper<Method> {
 		}
 	}
 
-	private static Pair<String, String> getMethodPair(Method m) {
-		return new Pair<String, String>( m.getASMDesc(), m.getName());
+	private static String getMethodPair(Method m) {
+		return m.getASMDesc() + "$" + m.getName();
 	}
 
+	@Override
 	public Method map(Method t) {
 		return this.methodMap.get(getMethodPair(t));
 	}

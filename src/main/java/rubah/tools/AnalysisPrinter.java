@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -21,14 +21,10 @@
 package rubah.tools;
 
 import java.io.IOException;
-import java.util.Map.Entry;
 
 import rubah.framework.Clazz;
 import rubah.framework.Method;
 import rubah.framework.Namespace;
-import rubah.tools.UpdatableJarAnalyzer.VersionDescriptor;
-
-import org.javatuples.Pair;
 
 public class AnalysisPrinter extends ReadTool {
 	public static final String TOOL_NAME = "printer";
@@ -36,17 +32,13 @@ public class AnalysisPrinter extends ReadTool {
 	@Override
 	public void processJar() throws IOException {
 
-		VersionDescriptor descriptor = UpdatableJarAnalyzer.readFile(this.inFile, new Namespace());
+		Namespace namespace = UpdatableJarAnalyzer.readFile(this.inFile, new Namespace());
 
-		for (Clazz c : descriptor.namespace.getDefinedClasses()){
+		for (Clazz c : namespace.getDefinedClasses()){
 			System.out.println(c);
 			for (Method m : c.getMethods()) {
 				System.out.println(m.getName() + " - " + m.getBodyMD5());
 			}
-		}
-
-		for (Entry<Pair<Clazz, Method>, Integer> entry : descriptor.overloads.entrySet()){
-			System.out.println(entry);
 		}
 	}
 

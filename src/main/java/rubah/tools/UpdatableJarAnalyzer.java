@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -30,20 +30,12 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
-import org.javatuples.Pair;
-import org.javatuples.Quartet;
-import org.javatuples.Quintet;
-import org.javatuples.Sextet;
-import org.javatuples.Tuple;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
@@ -159,58 +151,32 @@ public class UpdatableJarAnalyzer extends ReadWriteTool implements Opcodes {
 		this.visitor = new DecreaseClassMethodsProtection(infoGatherer);
 		super.processJar();
 
-		infoGatherer.computeOverloads();
-		this.writeOutFile(
-				new VersionDescriptor(
-						newNamespace,
-						infoGatherer.getOverloads()));
+		this.writeOutFile(newNamespace);
 	}
 
-	private void writeOutFile(VersionDescriptor descriptor) throws IOException {
+	private void writeOutFile(Namespace namespace) throws IOException {
 		ObjectOutputStream outStream =
 				new ObjectOutputStream(new FileOutputStream(this.outFile));
 
 		AnalysisData data = new AnalysisData();
-		for (Clazz c : descriptor.namespace.getDefinedClasses()) {
+		for (Clazz c : namespace.getDefinedClasses())
 			data.updatableClasses.add(new ClassData(c));
-		}
-
-		for (Entry<Pair<Clazz, Method>, Integer> entry : descriptor.overloads.entrySet()) {
-			data.overloads.put(
-					new Pair<ClassData, MethodData>(
-							new ClassData(entry.getKey().getValue0()),
-							new MethodData(entry.getKey().getValue1())),
-					entry.getValue());
-		}
 
 		outStream.writeObject(data);
 
 		outStream.close();
 	}
 
-	public static class VersionDescriptor {
-		public final Namespace namespace;
-		public final Map<Pair<Clazz, Method>, Integer> overloads;
-
-		public VersionDescriptor(Namespace namespace,
-				Map<Pair<Clazz, Method>, Integer> overloads) {
-			this.namespace = namespace;
-			this.overloads = overloads;
-		}
-	}
-
-	public static VersionDescriptor readFile(File inJar, Namespace namespace) throws FileNotFoundException, IOException {
+	public static Namespace readFile(File inJar, Namespace namespace) throws FileNotFoundException, IOException {
 		return readFile(IOUtils.toByteArray(new FileInputStream(inJar)), namespace);
 	}
 
-	public static VersionDescriptor readFile(byte[] updateDescriptor, Namespace namespace)
+	public static Namespace readFile(byte[] updateDescriptor, Namespace namespace)
 			throws IOException {
 		ObjectInputStream outStream =
 				new ObjectInputStream(new ByteArrayInputStream(updateDescriptor));
 
 		Set<Clazz> classes = new HashSet<Clazz>();
-		Map<Pair<Clazz, Method>, Integer> overloads =
-				new HashMap<Pair<Clazz,Method>, Integer>();
 		AnalysisData data = null;
 		try {
 			data = (AnalysisData) outStream.readObject();
@@ -222,122 +188,82 @@ public class UpdatableJarAnalyzer extends ReadWriteTool implements Opcodes {
 
 		HashSet<String> classNames = new HashSet<String>();
 
-		for (ClassData cd : data.updatableClasses) {
-			classNames.add(Type.getType(cd.tuple.getValue0()).getClassName());
-		}
+		for (ClassData cd : data.updatableClasses)
+			classNames.add(Type.getType(cd.fqn).getClassName());
 
 		Namespace newNamespace =
 				new DelegatingNamespace(namespace, classNames);
 
 
-		for (ClassData cd : data.updatableClasses) {
-			Clazz c = cd.toClass(newNamespace);
-			for (MethodData md : cd.tuple.getValue3()) {
-				List<Clazz> args = new LinkedList<Clazz>();
-				for (String argFqn : md.tuple.getValue3()) {
-					args.add(newNamespace.getClass(Type.getType(argFqn)));
-				}
+		for (ClassData cd : data.updatableClasses)
+			classes.add(cd.toClass(newNamespace));
 
-				Method m = new Method(
-						md.tuple.getValue0(),
-						md.tuple.getValue1(),
-						newNamespace.getClass(Type.getType(md.tuple.getValue2())), args);
-
-				Integer overload =
-						data.overloads.get(new Pair<ClassData, MethodData>(cd, md));
-
-				if (overload != null) {
-					overloads.put(new Pair<Clazz, Method>(c, m), overload);
-				}
-			}
-
-			classes.add(c);
-		}
-
-		return new VersionDescriptor(newNamespace, overloads);
+		return newNamespace;
 	}
 
-	private static abstract class ElementData<T extends Tuple> implements Serializable {
-		protected T tuple;
+	public static class ClassData implements Serializable {
+		private static final long serialVersionUID = 1722351260872124919L;
 
-		@Override
-		public int hashCode() {
-			return this.tuple.hashCode();
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof ElementData) {
-				return this.tuple.equals(((ElementData) obj).tuple);
-			}
-			return false;
-		}
-
-		@Override
-		public String toString() {
-			return this.tuple.toString();
-		}
-	}
-
-	public static class ClassData
-			extends ElementData<Sextet<String, String, Set<FieldData>, Set<MethodData>, Boolean, Set<String>>> {
+		private String			fqn;
+		private String 			parentFqn;
+		private boolean			isInterface;
+		private FieldData[] 	fields;
+		private MethodData[]	methods;
+		private String[]		ifaces;
 
 		public ClassData(Clazz c) {
-			String fqn = c.getASMType().getDescriptor();
-			String parentFqn = null;
+			this.fqn = c.getASMType().getDescriptor();
+			this.isInterface = c.isInterface();
 			if (c.getParent() != null) {
-				parentFqn = c.getParent().getASMType().getDescriptor();
+				this.parentFqn = c.getParent().getASMType().getDescriptor();
 			}
 
-			Set<String> interfaces = new HashSet<String>();
-			for (Clazz iface : c.getInterfaces()) {
-				interfaces.add(iface.getASMType().getDescriptor());
-			}
+			this.ifaces = new String[c.getInterfaces().size()];
+			int i = 0;
+			for (Clazz iface : c.getInterfaces())
+				this.ifaces[i++] = iface.getASMType().getDescriptor();
 
-			Set<FieldData> fields = new HashSet<FieldData>();
-			for (Field f : c.getFields()) {
-				fields.add(new FieldData(f));
-			}
+			this.fields = new FieldData[c.getFields().size()];
+			i = 0;
+			for (Field f : c.getFields())
+				this.fields[i++] = new FieldData(f);
 
-			Set<MethodData> methods = new HashSet<MethodData>();
-			for (Method m : c.getMethods()) {
-				methods.add(new MethodData(m));
-			}
-
-			this.tuple =
-					new Sextet<String, String, Set<FieldData>, Set<MethodData>, Boolean, Set<String>>(
-							fqn, parentFqn, fields, methods, c.isInterface(), interfaces);
+			this.methods = new MethodData[c.getMethods().size()];
+			i = 0;
+			for (Method m : c.getMethods())
+				methods[i++] = new MethodData(m);
 		}
 
 		public Clazz toClass(Namespace namespace) {
-			Clazz ret = namespace.getClass(Type.getType(this.tuple.getValue0()), true);
-			ret.setInterface(this.tuple.getValue4());
-			if (this.tuple.getValue1() != null) {
-				ret.setParent(namespace.getClass(Type.getType(this.tuple.getValue1())));
+			Clazz ret = namespace.getClass(Type.getType(this.fqn), true);
+			ret.setInterface(this.isInterface);
+			if (this.parentFqn != null) {
+				ret.setParent(namespace.getClass(Type.getType(this.parentFqn)));
 			}
-			for (String iface : this.tuple.getValue5()) {
+			for (String iface : this.ifaces) {
 				ret.getInterfaces().add(namespace.getClass(Type.getType(iface)));
 			}
-			for (FieldData fd : this.tuple.getValue2()) {
+			for (FieldData fd : this.fields) {
 				Field f = new Field(
-						fd.tuple.getValue0(),
-						fd.tuple.getValue1(),
-						namespace.getClass(Type.getType(fd.tuple.getValue2())),
-						fd.tuple.getValue3());
+						fd.access,
+						fd.name,
+						namespace.getClass(Type.getType(fd.desc)),
+						fd.constant);
 				ret.getFields().add(f);
 			}
-			for (MethodData md : this.tuple.getValue3()) {
+			for (MethodData md : this.methods) {
 				List<Clazz> args = new LinkedList<Clazz>();
-				for (String argFqn : md.tuple.getValue3()) {
+				for (String argFqn : md.argsDesc) {
 					args.add(namespace.getClass(Type.getType(argFqn)));
 				}
 
 				Method m = new Method(
-						md.tuple.getValue0(),
-						md.tuple.getValue1(),
-						namespace.getClass(Type.getType(md.tuple.getValue2())), args);
+						md.access,
+						md.name,
+						namespace.getClass(Type.getType(md.retDesc)),
+						args);
 
-				m.setBodyMD5(md.tuple.getValue4());
+				m.setBodyMD5(md.bodyMD5);
 
 				ret.addMethod(m);
 			}
@@ -346,33 +272,49 @@ public class UpdatableJarAnalyzer extends ReadWriteTool implements Opcodes {
 		}
 	}
 
-	public static class FieldData extends ElementData<Quartet<Integer, String, String, Boolean>> {
+	public static class FieldData implements Serializable {
+		private static final long serialVersionUID = 6269593623533725416L;
+
+		private int 	access;
+		private String 	name;
+		private String 	desc;
+		private boolean constant;
+
 		public FieldData(Field f) {
-			this.tuple = new Quartet<Integer, String, String, Boolean>(
-					f.getAccess(), f.getName(), f.getType().getASMType().getDescriptor(), f.isConstant());
+			this.access 	= f.getAccess();
+			this.name		= f.getName();
+			this.desc		= f.getType().getASMType().getDescriptor();
+			this.constant	= f.isConstant();
 		}
 	}
 
-	public static class MethodData extends ElementData<Quintet<Integer, String, String, List<String>, String>> {
+	public static class MethodData implements Serializable {
+		private static final long serialVersionUID = 3802620430701092039L;
+
+		private int 		access;
+		private String		name;
+		private	String		retDesc;
+		private	String[]	argsDesc;
+		private String		bodyMD5;
+
 		public MethodData(Method m) {
-			List<String> args = new LinkedList<String>();
+			String[] args = new String[m.getArgTypes().size()];
 
-			for (Clazz arg : m.getArgTypes()) {
-				args.add(arg.getASMType().getDescriptor());
-			}
+			int i = 0;
+			for (Clazz arg : m.getArgTypes())
+				args[i++] = arg.getASMType().getDescriptor();
 
-			this.tuple = new Quintet<Integer, String, String, List<String>, String>(
-					m.getAccess(),
-					m.getName(),
-					m.getRetType().getASMType().getDescriptor(),
-					args,
-					m.getBodyMD5());
+			this.access		= m.getAccess();
+			this.name		= m.getName();
+			this.retDesc	= m.getRetType().getASMType().getDescriptor();
+			this.argsDesc	= args;
+			this.bodyMD5	= m.getBodyMD5();
 		}
 	}
 
 	private static class AnalysisData implements Serializable {
+		private static final long serialVersionUID = -8021445031150193622L;
+
 		private Set<ClassData> updatableClasses = new HashSet<ClassData>();
-		private Map<Pair<ClassData, MethodData>, Integer> overloads =
-				new HashMap<Pair<ClassData,MethodData>, Integer>();
 	}
 }

@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.javatuples.Pair;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
@@ -50,28 +49,38 @@ public class AddGettersAndSetters extends RubahTransformer {
 	private static final Type CLASS_TYPE = Type.getType(Class.class);
 	private static final Type FIELD_TYPE = Type.getType(java.lang.reflect.Field.class);
 	private static final Type OBJECT_TYPE = Type.getType(Object.class);
-	private static final Map<Integer, Pair<String, Type>> putInvocationMap;
+	private static final Map<Integer, Invocation> putInvocationMap;
+
+	private static class Invocation {
+		final String desc;
+		final Type 	 type;
+
+		public Invocation(String desc, Type type) {
+			this.desc = desc;
+			this.type = type;
+		}
+	}
 
 	static {
-		putInvocationMap = new HashMap<Integer, Pair<String,Type>>();
+		putInvocationMap = new HashMap<>();
 		putInvocationMap.put(org.objectweb.asm.Type.BOOLEAN,
-				new Pair<String, Type>("putBoolean", Type.BOOLEAN_TYPE));
+				new Invocation("putBoolean", Type.BOOLEAN_TYPE));
 		putInvocationMap.put(org.objectweb.asm.Type.BYTE,
-				new Pair<String, Type>("putByte", Type.BYTE_TYPE));
+				new Invocation("putByte", Type.BYTE_TYPE));
 		putInvocationMap.put(org.objectweb.asm.Type.CHAR,
-				new Pair<String, Type>("putChar", Type.CHAR_TYPE));
+				new Invocation("putChar", Type.CHAR_TYPE));
 		putInvocationMap.put(org.objectweb.asm.Type.DOUBLE,
-				new Pair<String, Type>("putDouble", Type.DOUBLE_TYPE));
+				new Invocation("putDouble", Type.DOUBLE_TYPE));
 		putInvocationMap.put(org.objectweb.asm.Type.FLOAT,
-				new Pair<String, Type>("putFloat", Type.FLOAT_TYPE));
+				new Invocation("putFloat", Type.FLOAT_TYPE));
 		putInvocationMap.put(org.objectweb.asm.Type.INT,
-				new Pair<String, Type>("putInt", Type.INT_TYPE));
+				new Invocation("putInt", Type.INT_TYPE));
 		putInvocationMap.put(org.objectweb.asm.Type.LONG,
-				new Pair<String, Type>("putLong", Type.LONG_TYPE));
+				new Invocation("putLong", Type.LONG_TYPE));
 		putInvocationMap.put(org.objectweb.asm.Type.SHORT,
-				new Pair<String, Type>("putShort", Type.SHORT_TYPE));
+				new Invocation("putShort", Type.SHORT_TYPE));
 		putInvocationMap.put(org.objectweb.asm.Type.BOOLEAN,
-				new Pair<String, Type>("putBoolean", Type.BOOLEAN_TYPE));
+				new Invocation("putBoolean", Type.BOOLEAN_TYPE));
 	}
 
 	private HashSet<Field> fields = new HashSet<Field>();
@@ -402,20 +411,19 @@ public class AddGettersAndSetters extends RubahTransformer {
 	}
 
 	private void generatePutObjectInvocation(MethodVisitor mv, Type type) {
-		Pair<String, Type> result = putInvocationMap.get(type.getSort());
-		if (result == null) {
-			result = new Pair<String, Type>("putObject", OBJECT_TYPE);
-		}
+		Invocation result = putInvocationMap.get(type.getSort());
+		if (result == null)
+			result = new Invocation("putObject", OBJECT_TYPE);
 
 		mv.visitMethodInsn(
 				INVOKEVIRTUAL,
 				UNSAFE_TYPE.getInternalName(),
-				result.getValue0(),
+				result.desc,
 				Type.getMethodDescriptor(
 						Type.VOID_TYPE,
 						OBJECT_TYPE,
 						Type.LONG_TYPE,
-						result.getValue1()),
+						result.type),
 				false);
 	}
 

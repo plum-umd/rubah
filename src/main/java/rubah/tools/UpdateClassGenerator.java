@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -35,7 +35,6 @@ import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
 import org.apache.commons.io.IOUtils;
-import org.javatuples.Pair;
 import org.objectweb.asm.Opcodes;
 
 import rubah.bytecode.transformers.AddHashCodeField;
@@ -233,19 +232,19 @@ public class UpdateClassGenerator implements Opcodes {
 					} else {
 						ctm.hasNonStaticChanges = true;
 					}
-					ctm.newFields.add(new Pair<Field, Change<Field>>(fieldChange.getKey(), fieldChange.getValue()));
+					ctm.newFields.add(new ChangedField(fieldChange.getKey(), fieldChange.getValue()));
 				} else if (changeSet.hasChange(ChangeType.NEW_CONSTANT)) {
 					ctm.hasStaticChanges = true;
-					ctm.newConstants.add(new Pair<Field, Change<Field>>(fieldChange.getKey(), fieldChange.getValue()));
+					ctm.newConstants.add(new ChangedField(fieldChange.getKey(), fieldChange.getValue()));
 				} else if (changeSet.hasChange(ChangeType.FIELD_TYPE_CHANGE)) {
 					if (Modifier.isStatic(fieldChange.getKey().getAccess())) {
 						ctm.hasStaticChanges = true;
 					} else {
 						ctm.hasNonStaticChanges = true;
 					}
-					ctm.typeChangedFields.add(new Pair<Field, Change<Field>>(fieldChange.getKey(), fieldChange.getValue()));
+					ctm.typeChangedFields.add(new ChangedField(fieldChange.getKey(), fieldChange.getValue()));
 				} else {
-					ctm.unmodifiedFields.add(new Pair<Field, Change<Field>>(fieldChange.getKey(), fieldChange.getValue()));
+					ctm.unmodifiedFields.add(new ChangedField(fieldChange.getKey(), fieldChange.getValue()));
 				}
 			}
 
@@ -326,14 +325,43 @@ public class UpdateClassGenerator implements Opcodes {
 	public static class SortedChanges {
 	}
 
+	public static class ChangedField {
+		public final Field 			f;
+		public final Change<Field> 	changes;
+
+		public ChangedField(Field f, Change<Field> changes) {
+			this.f 			= f;
+			this.changes 	= changes;
+		}
+
+		@Override
+		public int hashCode() {
+			return this.f.hashCode() ^ this.changes.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof ChangedField) {
+				ChangedField o = (ChangedField) obj;
+				return o.f.equals(this.f) && o.changes.equals(this.changes);
+			}
+
+			return false;
+		}
+
+		public Field getF() {
+			return f;
+		}
+	}
+
 	public static class ChangesTemplateModel {
 		private final String v0, v1;
-		private boolean hasStaticChanges = false;
-		private boolean hasNonStaticChanges = false;
-		public final Set<Pair<Field, Change<Field>>> unmodifiedFields = new HashSet<Pair<Field,Change<Field>>>();
-		public final Set<Pair<Field, Change<Field>>> newFields = new HashSet<Pair<Field,Change<Field>>>();
-		public final Set<Pair<Field, Change<Field>>> newConstants = new HashSet<Pair<Field,Change<Field>>>();
-		public final Set<Pair<Field, Change<Field>>> typeChangedFields = new HashSet<Pair<Field,Change<Field>>>();
+		private boolean hasStaticChanges 					= false;
+		private boolean hasNonStaticChanges 				= false;
+		public final Set<ChangedField> unmodifiedFields 	= new HashSet<ChangedField>();
+		public final Set<ChangedField> newFields 			= new HashSet<ChangedField>();
+		public final Set<ChangedField> newConstants 		= new HashSet<ChangedField>();
+		public final Set<ChangedField> typeChangedFields 	= new HashSet<ChangedField>();
 
 		public ChangesTemplateModel(String v0, String v1) {
 			this.v0 = v0;
@@ -364,19 +392,19 @@ public class UpdateClassGenerator implements Opcodes {
 			this.hasNonStaticChanges = hasNonStaticChanges;
 		}
 
-		public Set<Pair<Field, Change<Field>>> getUnmodifiedFields() {
+		public Set<ChangedField> getUnmodifiedFields() {
 			return this.unmodifiedFields;
 		}
 
-		public Set<Pair<Field, Change<Field>>> getNewFields() {
+		public Set<ChangedField> getNewFields() {
 			return this.newFields;
 		}
 
-		public Set<Pair<Field, Change<Field>>> getNewConstants() {
+		public Set<ChangedField> getNewConstants() {
 			return this.newConstants;
 		}
 
-		public Set<Pair<Field, Change<Field>>> getTypeChangedFields() {
+		public Set<ChangedField> getTypeChangedFields() {
 			return this.typeChangedFields;
 		}
 	}

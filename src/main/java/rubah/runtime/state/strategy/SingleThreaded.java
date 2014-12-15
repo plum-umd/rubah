@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -27,8 +27,6 @@ import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.javatuples.Pair;
-
 import rubah.framework.Clazz;
 import rubah.runtime.Version;
 import rubah.runtime.VersionManager;
@@ -38,13 +36,13 @@ import rubah.runtime.state.migrator.BlackListMigratorFactory;
 import rubah.runtime.state.migrator.DefaultObjectMigratorFactory;
 import rubah.runtime.state.migrator.MigratorFactory;
 import rubah.runtime.state.migrator.MigratorSubFactory;
+import rubah.runtime.state.migrator.MigratorSubFactory.Migrator;
 import rubah.runtime.state.migrator.OutdatedClassMigratorFactory;
 import rubah.runtime.state.migrator.OutdatedEnumMigratorFactory;
 import rubah.runtime.state.migrator.ReferenceMigratorFactory;
 import rubah.runtime.state.migrator.ReflectionMigratorFactory;
 import rubah.runtime.state.migrator.StaticFieldsMigratorFactory;
 import rubah.runtime.state.migrator.UpdatableObjectMigratorFactory;
-import rubah.runtime.state.migrator.MigratorSubFactory.Migrator;
 
 public class SingleThreaded implements MigrationStrategy {
 
@@ -172,10 +170,20 @@ public class SingleThreaded implements MigrationStrategy {
 		};
 	}
 
+	private static class ClassConversionTime {
+		final String 	className;
+		final long		conversionTime;
+
+		public ClassConversionTime(String className, long conversionTime) {
+			this.className = className;
+			this.conversionTime = conversionTime;
+		}
+	}
+
 	@Override
 	public void migrateStaticFields(Collection<Class<?>> classes) {
 		Version v1 = VersionManager.getInstance().getLatestVersion();
-		LinkedList<Pair<String, Long>> times = new LinkedList<Pair<String,Long>>();
+		LinkedList<ClassConversionTime> times = new LinkedList<>();
 		MigratorSubFactory staticMigratorFactory = new StaticFieldsMigratorFactory(this, v1);
 
 		for (Class<?> c : classes) {
@@ -188,19 +196,19 @@ public class SingleThreaded implements MigrationStrategy {
 			Migrator migrator = staticMigratorFactory.buildMigrator();
 			Object newC = migrator.migrate(c);
 			migrator.followReferences(newC);
-			times.add(new Pair<String, Long>(c.getName(), (System.currentTimeMillis() - time)));
+			times.add(new ClassConversionTime(c.getName(), (System.currentTimeMillis() - time)));
 		}
 
-		Collections.sort(times, new Comparator<Pair<String, Long>>() {
+		Collections.sort(times, new Comparator<ClassConversionTime>() {
 			@Override
-			public int compare(Pair<String, Long> o1, Pair<String, Long> o2) {
-				return o2.getValue1().compareTo(o1.getValue1());
+			public int compare(ClassConversionTime o1, ClassConversionTime o2) {
+				return Long.compare(o2.conversionTime, o1.conversionTime);
 			}
 		});
 
 
-		for (Pair<String, Long> t : times.subList(0, Math.min(times.size(), 10)))
-			System.out.println("\t" + t.getValue1() + "\t" + t.getValue0());
+		for (ClassConversionTime t : times.subList(0, Math.min(times.size(), 10)))
+			System.out.println("\t" + t.conversionTime + "\t" + t.className);
 	}
 
 	protected void migrateStatic(Object base, long offset) {

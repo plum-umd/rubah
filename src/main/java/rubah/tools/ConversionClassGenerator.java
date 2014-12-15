@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -94,7 +94,7 @@ public class ConversionClassGenerator implements Opcodes {
 
 		ConversionClassGenerator c =
 				new ConversionClassGenerator(
-						UpdatableJarAnalyzer.readFile(parser.versionDescriptor, new Namespace()).namespace,
+						UpdatableJarAnalyzer.readFile(parser.versionDescriptor, new Namespace()),
 						parser.preffix
 						);
 

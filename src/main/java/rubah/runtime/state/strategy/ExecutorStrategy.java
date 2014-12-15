@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -27,12 +27,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.javatuples.Quartet;
-
 import rubah.runtime.state.MigratingProgramState;
 
 /*default*/ abstract class ExecutorStrategy extends SingleThreaded {
-		private transient ConcurrentLinkedDeque<Quartet<Object, Long, Object, Long>> queued = new ConcurrentLinkedDeque<>();
+
+		private static class QueuedConversion {
+			final Object 	from;
+			final long 		fromOffset;
+			final Object	to;
+			final long		toOffset;
+
+			public QueuedConversion(Object from, long fromOffset, Object to,
+					long toOffset) {
+				this.from 		= from;
+				this.fromOffset = fromOffset;
+				this.to 		= to;
+				this.toOffset 	= toOffset;
+			}
+
+
+		}
+
+		private transient ConcurrentLinkedDeque<QueuedConversion> queued = new ConcurrentLinkedDeque<>();
 		protected transient StrippedCounter inFlight;
 		protected transient ExecutorService executor;
 		protected final int nThreads;
@@ -60,7 +76,7 @@ import rubah.runtime.state.MigratingProgramState;
 		public void migrate(final Object fromBase, long fromOffset, final Object toBase, long toOffset) {
 
 			if (this.executor == null) {
-				this.queued.add(new Quartet<Object, Long, Object, Long>(fromBase, fromOffset, toBase, toOffset));
+				this.queued.add(new QueuedConversion(fromBase, fromOffset, toBase, toOffset));
 				return;
 			}
 
@@ -98,8 +114,8 @@ import rubah.runtime.state.MigratingProgramState;
 			this.executor = this.getExecutor();
 
 			while (!this.queued.isEmpty()) {
-				Quartet<Object, Long, Object, Long> el = this.queued.poll();
-				this.migrate(el.getValue0(), el.getValue1(), el.getValue2(), el.getValue3());
+				QueuedConversion q = this.queued.poll();
+				this.migrate(q.from, q.fromOffset, q.to, q.toOffset);
 			}
 
 			synchronized (this) {

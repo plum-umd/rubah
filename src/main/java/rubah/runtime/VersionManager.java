@@ -39,7 +39,6 @@ import rubah.runtime.classloader.TransformerFactory;
 import rubah.runtime.classloader.VersionLoader;
 import rubah.runtime.state.Options;
 import rubah.tools.UpdatableJarAnalyzer;
-import rubah.tools.UpdatableJarAnalyzer.VersionDescriptor;
 import rubah.update.UpdateClass;
 import rubah.update.V0V0UpdateClass;
 
@@ -113,7 +112,7 @@ public final class VersionManager {
 	}
 
 	private Version createNextVersion(byte[] descriptorBytes) throws IOException {
-		VersionDescriptor descriptor =
+		Namespace namespace =
 				UpdatableJarAnalyzer.readFile(descriptorBytes, defaultNamespace);
 
 		Version v1;
@@ -122,9 +121,9 @@ public final class VersionManager {
 			number = this.versions.getFirst().getNumber() + 1;
 			Version prevVersion = this.versions.getFirst();
 //			v1 = new Version(number-1, descriptor, prevVersion);
-			v1 = new Version(number, descriptor, prevVersion);
+			v1 = new Version(number, namespace, prevVersion);
 		} else {
-			v1 = new Version(number, descriptor, null);
+			v1 = new Version(number, namespace, null);
 		}
 
 		return v1;

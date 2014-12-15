@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -20,27 +20,22 @@
  *******************************************************************************/
 package rubah.runtime;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import org.javatuples.Pair;
 
 import rubah.bytecode.transformers.UpdatableClassRenamer;
 import rubah.framework.Clazz;
 import rubah.framework.Method;
 import rubah.framework.Namespace;
 import rubah.framework.Type;
-import rubah.tools.UpdatableJarAnalyzer.VersionDescriptor;
 import rubah.update.ProgramUpdate;
 import rubah.update.UpdateClass;
 import rubah.update.V0V0UpdateClass;
 
 public class Version {
 	private final int number;
-	private final Map<Pair<Clazz, Method>, Integer> overloads;
 	private Map<String, String> updatableToOriginalClassNames = new HashMap<String, String>();
 	private Map<String, String> originalToUpdatableClassNames = new HashMap<String, String>();
 	private ProgramUpdate update;
@@ -53,17 +48,13 @@ public class Version {
 
 		this.previous = null;
 		this.number = -1;
-		this.overloads = new HashMap<Pair<Clazz,Method>, Integer>();
 		this.update = new ProgramUpdate();
 	}
 
-	public Version(final int number, VersionDescriptor descriptor, Version previous) {
+	public Version(final int number, Namespace namespace, Version previous) {
 		this.previous = previous;
 		this.number = number;
-		this.namespace = descriptor.namespace;
-
-		this.overloads =
-				Collections.unmodifiableMap(descriptor.overloads);
+		this.namespace = namespace;
 	}
 
 	public void computeTraversal() {
@@ -81,6 +72,7 @@ public class Version {
 	private void computeProgramUpdate(UpdateClass updateClass, boolean v0v0, boolean isLazy) {
 		this.update = new ProgramUpdate(
 						new ProgramUpdate.Callback() {
+							@Override
 							public void foundUpdatableClass(Clazz c1) {
 								Type newType =
 										Type.getObjectType(UpdatableClassRenamer.rename(c1.getFqn(), Version.this.number).replace('.', '/'));
@@ -98,10 +90,6 @@ public class Version {
 
 	public int getNumber() {
 		return this.number;
-	}
-
-	public Map<Pair<Clazz, Method>, Integer> getOverloads() {
-		return this.overloads;
 	}
 
 	public String getUpdatableName(String originalName) {
@@ -161,33 +149,33 @@ public class Version {
 	}
 
 	public Type renameIfUpdatable(Type type) {
-	
+
 		if (type.getSort() == org.objectweb.asm.Type.ARRAY) {
 			Type renamed = this.renameIfUpdatable(type.getElementType());
-	
+
 			if (renamed != type.getElementType()) {
 				return this.namespace.getClass(renamed, type.getDimensions()).getASMType();
 			}
 		} else {
 			String newName = this.getUpdatableName(type.getClassName());
-	
+
 			if (newName != null) {
 				type = Type.getObjectType(newName.replace('.', '/'));
 			}
 		}
-	
+
 		return type;
 	}
 
 	private Type[] renameIfUpdatable(Type[] types) {
 		Type[] ret = new Type[types.length];
-	
+
 		int i = 0;
-	
+
 		for (Type t : types) {
 			ret[i++] = this.renameIfUpdatable(t);
 		}
-	
+
 		return ret;
 	}
 
@@ -202,7 +190,7 @@ public class Version {
 	public String renameMethodDescIfUpdatable(String methodDesc) {
 		Type retType = this.renameIfUpdatable(Type.getReturnType(methodDesc));
 		Type[] argTypes = this.renameIfUpdatable(Type.getArgumentTypes(methodDesc));
-	
+
 		return Type.getMethodDescriptor(retType, argTypes);
 	}
 
