@@ -35,17 +35,18 @@ public class UpdateState {
 	private Map<RubahThread, RubahThread> running;
 	private Installer installer;
 	private Map<String, ClassRedefinition> redefinitions;
-	private Set<StoppedThread> stopped = new HashSet<StoppedThread>();
+	private Set<StoppedThread> stopped 				 = new HashSet<StoppedThread>();
 	private Set<StoppedThreadPool> stoppedThreadPool = new HashSet<StoppedThreadPool>();
 
 	private Options options;
 	private States states;
 	private MigrationStrategy strategy;
 	private long updateTime;
-	private HashedMap offsets =  new HashedMap();
+	private HashedMap offsets 		= new HashedMap();
 	private HashedMap staticOffsets = new HashedMap();
-	private HashedMap staticBases = new HashedMap();
+	private HashedMap staticBases 	= new HashedMap();
 
+	private boolean observed = false;
 
 	public Map<RubahThread, RubahThread> getRunning() {
 		return running;
@@ -157,5 +158,12 @@ public class UpdateState {
 
 	public Set<StoppedThreadPool> getStoppedThreadPool() {
 		return stoppedThreadPool;
+	}
+
+	public boolean isObserved() {
+		return observed;
+	}
+	public void setObserved(boolean observed) {
+		this.observed = observed;
 	}
 }

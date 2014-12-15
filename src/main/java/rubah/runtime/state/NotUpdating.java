@@ -23,8 +23,8 @@ package rubah.runtime.state;
 import java.io.IOException;
 import java.util.HashMap;
 
-import rubah.Rubah;
 import rubah.RubahThread;
+import rubah.runtime.state.ObservedNotUpdating.Observer;
 
 public class NotUpdating extends RubahState {
 
@@ -89,5 +89,10 @@ public class NotUpdating extends RubahState {
 	@Override
 	public boolean isUpdateRequested() {
 		return false;
+	}
+
+	@Override
+	public RubahState observeState(Observer observer) {
+		return new ObservedNotUpdating(this.state, observer);
 	}
 }

@@ -31,8 +31,11 @@ import java.net.Socket;
 import org.apache.commons.io.output.NullOutputStream;
 
 import rubah.Rubah;
+import rubah.runtime.RubahRuntime;
 import rubah.runtime.VersionManager;
 import rubah.runtime.state.Installer;
+import rubah.runtime.state.ObservedNotUpdating.Observer;
+import rubah.runtime.state.ObservedStoppingThreads;
 import rubah.runtime.state.Options;
 import rubah.tools.updater.ParsingArguments;
 import rubah.tools.updater.UpdateState;
@@ -113,6 +116,7 @@ public class Updater {
 
 	public enum Type { v0v0, v0v1 }
 
+
 	private static class ListenerThread extends Thread {
 
 		public ListenerThread(String name) {
@@ -130,28 +134,22 @@ public class Updater {
 						ObjectInputStream inFromClient = new ObjectInputStream(clientSocket.getInputStream());
 
 						Type type = (Type) inFromClient.readObject();
-						final Options options = (Options) inFromClient.readObject();
+						Options options = (Options) inFromClient.readObject();
+						RemoteObserver observer = new RemoteObserver(type, options);
 
 						try {
-							switch (type) {
-							case v0v0:
-								Rubah.installNewVersion(options, new Installer() {
-									@Override
-									public void installVersion() throws IOException {
-										VersionManager.getInstance().installV0V0(options);
+							RubahRuntime.observeState(observer);
+							synchronized (observer) {
+								while (!observer.updated) {
+									try {
+										observer.wait();
+										// The application thread has installed the update
+										// The updater thread can now finish the update
+										((ObservedStoppingThreads)RubahRuntime.getState()).restart();
+									} catch (InterruptedException e) {
+										continue;
 									}
-								});
-								break;
-							case v0v1:
-								Rubah.installNewVersion(options, new Installer() {
-									@Override
-									public void installVersion() throws IOException {
-										VersionManager.getInstance().installVersion(options);
-									}
-								});
-								break;
-							default:
-								throw new Error("Unknown update type");
+								}
 							}
 						} catch (Throwable e) {
 							System.out.println(e);
@@ -166,6 +164,57 @@ public class Updater {
 				}
 			} catch (IOException e) {
 				throw new Error(e);
+			}
+		}
+
+		private static class RemoteObserver implements Observer {
+			private final Type type;
+			private final Options options;
+			private boolean updated = false;
+
+			private Installer installer = new Installer() {
+				@Override
+				public void installVersion() throws IOException {
+					switch (type) {
+					case v0v0:
+						VersionManager.getInstance().installV0V0(options);
+						break;
+					case v0v1:
+						VersionManager.getInstance().installVersion(options);
+						break;
+					default:
+						throw new Error("Unknown update type");
+					}
+				}
+			};
+
+			public RemoteObserver(Type type, Options options) {
+				this.type = type;
+				this.options = options;
+			}
+
+			@Override
+			public void update(String updatePoint) {
+				synchronized (this) {
+					if (!this.updated) {
+						// Use this application thread to install the update
+						// This is unlike the normal case, where the updater thread installs the update
+						// But this behavior ensures that the update is installed at this exact update point
+						// Note that this thread is holding the write lock on RubahRuntime at this point,
+						// effectively locking out all other threads that are trying to reach an update point
+						this.updated = true;
+						Rubah.installNewVersion(this.options, this.installer);
+						try {
+							// Reach the update point after installing the update
+							// This throws an exception that gets propagated to application code
+							RubahRuntime.update(updatePoint);
+						} finally {
+							// The update exception gets "caught" here before being propagated up
+							// The updater thread will now wake and finish the update
+							this.notifyAll();
+						}
+					}
+				}
 			}
 		}
 	}

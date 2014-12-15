@@ -25,6 +25,7 @@ import java.io.IOException;
 import rubah.RubahException;
 import rubah.RubahThread;
 import rubah.runtime.VersionManager;
+import rubah.runtime.state.ObservedNotUpdating.Observer;
 
 public abstract class RubahState {
 	protected UpdateState state;
@@ -78,5 +79,17 @@ public abstract class RubahState {
 
 	public void ensureStaticFieldsMigrated(Class<?> c) {
 		throw new Error("Input not expected");
+	}
+
+	public RubahState observeState(Observer observer) {
+		throw new Error("Input not expected");
+	}
+
+	public boolean isObserved() {
+		return this.state.isObserved();
+	}
+
+	public void setObserved(boolean observed) {
+		this.state.setObserved(observed);
 	}
 }

@@ -39,6 +39,11 @@ public class States {
 	}
 
 	public static void setStates(UpdateState state) {
+		if (state.isObserved()) {
+			setObservedStates(state);
+			return;
+		}
+
 		States states = null;
 
 		if (state.getOptions().isStopAndGo()) {
@@ -65,6 +70,35 @@ public class States {
 				new MigratingControlFlow(state),
 				new NotUpdating(state)
 				);
+		}
+
+		state.setStates(states);
+	}
+
+	public static void setObservedStates(UpdateState state) {
+		States states = null;
+
+		if (state.getOptions().isStopAndGo()) {
+			states = new States(
+					new ObservedStoppingThreads(state, new States(
+							new MigratingControlFlow(state),
+							new NotUpdating(state))));
+		} else if(state.getOptions().isLazy()) {
+			states = new States(
+					new InstallingNewVersion(state),
+					new ComputingUpdateMetadata(state),
+					new ObservedStoppingThreads(state, new States(
+							new LazyMigratingProgramState(state),
+							new LazyMigratingControlFlow(state),
+							new LazyNotUpdating(state))));
+		} else {
+			states = new States(
+					new InstallingNewVersion(state),
+					new ComputingUpdateMetadata(state),
+					new ObservedStoppingThreads(state, new States(
+							new MigratingProgramState(state),
+							new MigratingControlFlow(state),
+							new NotUpdating(state))));
 		}
 
 		state.setStates(states);

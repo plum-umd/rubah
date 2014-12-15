@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -27,27 +27,36 @@ import java.util.concurrent.locks.ReentrantLock;
 import rubah.RubahException;
 import rubah.RubahThread;
 import rubah.io.RubahIO;
+import rubah.runtime.RubahRuntime;
 import rubah.runtime.state.UpdateState.StoppedThread;
 
-public class StoppingThreads extends RubahState {
+public class ObservedStoppingThreads extends RubahState {
+	private long	time;
+	private States	states;
 
-	protected Lock stateLock = new ReentrantLock();
-	protected Condition runningChanged = this.stateLock.newCondition();
+	private Lock stateLock = new ReentrantLock();
+	private Condition runningChanged = this.stateLock.newCondition();
 
-	public StoppingThreads(UpdateState state) {
+	public ObservedStoppingThreads(UpdateState state, States states) {
 		super(state);
+		this.states = states;
 	}
 
 	@Override
-	public void doStart() {
-		long time = System.currentTimeMillis();
+	public RubahState start() {
+		this.time = System.currentTimeMillis();
 		this.state.setUpdateTime(time);
 		// Interrupt threads waiting on IO
 		RubahIO.interruptThreads();
 
 		System.out.print("Waiting for threads ");
 		this.state.printRunningThreads();
-		// Wait untill all threads reach an update point
+		// This code is executed by an application thread
+		// Return null to stop that, the updater thread will call method restart after
+		return null;
+	}
+
+	public void restart() {
 		this.stateLock.lock();
 		try {
 			while(!this.state.getRunning().isEmpty()) {
@@ -58,21 +67,11 @@ public class StoppingThreads extends RubahState {
 					continue;
 				}
 			}
-		} finally {
-			this.stateLock.unlock();
-		}
 
-		time = System.currentTimeMillis() - time;
-		System.out.println("Stopped " + this.state.getStopped().size() + " threads in " + time + "ms");
-	}
-
-
-
-	@Override
-	public void registerRunningThread(RubahThread t) {
-		this.stateLock.lock();
-		try {
-			super.registerRunningThread(t);
+			time = System.currentTimeMillis() - time;
+			System.out.println("Stopped " + this.state.getStopped().size() + " threads in " + time + "ms");
+			this.state.setStates(this.states);
+			RubahRuntime.changeState(states.moveToNextState());
 		} finally {
 			this.stateLock.unlock();
 		}
@@ -109,5 +108,10 @@ public class StoppingThreads extends RubahState {
 	@Override
 	public boolean isUpdateRequested() {
 		return true;
+	}
+
+	@Override
+	protected void doStart() {
+		throw new Error("Should never be called");
 	}
 }
