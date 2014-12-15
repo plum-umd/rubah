@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -70,22 +70,8 @@ public class RubahRuntime {
 //		Thread.yield();
 	}
 
-	public static void installNewVersion(final Options options) {
-		changeState(state.installUpdate(new Installer() {
-			@Override
-			public void installVersion() throws IOException {
-				VersionManager.getInstance().installVersion(options);
-			}
-		}, options));
-	}
-
-	public static void installV0V0(final Options options) {
-		changeState(state.installUpdate(new Installer() {
-			@Override
-			public void installVersion() throws IOException {
-				VersionManager.getInstance().installV0V0(options);
-			}
-		}, options));
+	public static void installNewVersion(final Options options, final Installer installer) {
+		changeState(state.installUpdate(installer, options));
 	}
 
 	public static void registerRunningThread(RubahThread t) {

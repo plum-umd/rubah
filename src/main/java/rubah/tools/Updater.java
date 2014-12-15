@@ -31,6 +31,8 @@ import java.net.Socket;
 import org.apache.commons.io.output.NullOutputStream;
 
 import rubah.Rubah;
+import rubah.runtime.VersionManager;
+import rubah.runtime.state.Installer;
 import rubah.runtime.state.Options;
 import rubah.tools.updater.ParsingArguments;
 import rubah.tools.updater.UpdateState;
@@ -128,15 +130,25 @@ public class Updater {
 						ObjectInputStream inFromClient = new ObjectInputStream(clientSocket.getInputStream());
 
 						Type type = (Type) inFromClient.readObject();
-						Options options = (Options) inFromClient.readObject();
+						final Options options = (Options) inFromClient.readObject();
 
 						try {
 							switch (type) {
 							case v0v0:
-								Rubah.installV0V0(options);
+								Rubah.installNewVersion(options, new Installer() {
+									@Override
+									public void installVersion() throws IOException {
+										VersionManager.getInstance().installV0V0(options);
+									}
+								});
 								break;
 							case v0v1:
-								Rubah.installNewVersion(options);
+								Rubah.installNewVersion(options, new Installer() {
+									@Override
+									public void installVersion() throws IOException {
+										VersionManager.getInstance().installVersion(options);
+									}
+								});
 								break;
 							default:
 								throw new Error("Unknown update type");
