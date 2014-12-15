@@ -16,11 +16,6 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.javatuples</groupId>
-			<artifactId>javatuples</artifactId>
-			<version>1.2</version>
-		</dependency>
-		<dependency>
 			<groupId>org.ow2.util</groupId>
 			<artifactId>util-base64</artifactId>
 			<version>1.0.35</version>
