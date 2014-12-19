@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -25,7 +25,6 @@ import java.io.IOException;
 import rubah.RubahException;
 import rubah.RubahThread;
 import rubah.runtime.VersionManager;
-import rubah.runtime.state.ObservedNotUpdating.Observer;
 
 public abstract class RubahState {
 	protected UpdateState state;
@@ -81,15 +80,7 @@ public abstract class RubahState {
 		throw new Error("Input not expected");
 	}
 
-	public RubahState observeState(Observer observer) {
+	public RubahState observeState(UpdateState.Observer observer) {
 		throw new Error("Input not expected");
-	}
-
-	public boolean isObserved() {
-		return this.state.isObserved();
-	}
-
-	public void setObserved(boolean observed) {
-		this.state.setObserved(observed);
 	}
 }

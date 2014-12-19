@@ -34,7 +34,6 @@ import rubah.Rubah;
 import rubah.runtime.RubahRuntime;
 import rubah.runtime.VersionManager;
 import rubah.runtime.state.Installer;
-import rubah.runtime.state.ObservedStoppingThreads;
 import rubah.runtime.state.Options;
 import rubah.tools.updater.ParsingArguments;
 import rubah.tools.updater.UpdateState;
@@ -204,19 +203,11 @@ public class Updater {
 
 						try {
 							if (observed) {
-								RubahRemoteObserver observer = new RubahRemoteObserver(options, installer, outToClient, inFromClient);
-								RubahRuntime.observeState(observer);
-								synchronized (observer) {
-									while (!observer.updated) {
-										try {
-											observer.wait();
-											// The application thread has installed the update
-											// The updater thread can now finish the update
-											((ObservedStoppingThreads)RubahRuntime.getState()).restart();
-										} catch (InterruptedException e) {
-											continue;
-										}
-									}
+								RubahRemoteObserver observer = new RubahRemoteObserver(outToClient, inFromClient);
+								while (true) {
+									// TODO handle observer disconnecting
+									RubahRuntime.observeState(observer);
+									Rubah.installNewVersion(options, installer);
 								}
 							} else {
 								Rubah.installNewVersion(options, installer);
@@ -237,51 +228,29 @@ public class Updater {
 			}
 		}
 
-		private static class RubahRemoteObserver implements rubah.runtime.state.ObservedNotUpdating.Observer {
-			private final Options options;
-			private boolean updated = false;
-			private Installer installer;
-
+		private static class RubahRemoteObserver implements rubah.runtime.state.UpdateState.Observer {
 			private final ObjectOutputStream outToClient;
 			private final ObjectInputStream  inFromClient;
 
-			public RubahRemoteObserver(Options options, Installer installer, ObjectOutputStream outToClient, ObjectInputStream inFromClient) {
-				this.options 	  = options;
-				this.installer 	  = installer;
+			public RubahRemoteObserver(ObjectOutputStream outToClient, ObjectInputStream inFromClient) {
 				this.outToClient  = outToClient;
 				this.inFromClient = inFromClient;
 			}
 
 			@Override
-			public void update(String updatePoint) {
+			public boolean update(String updatePoint) {
 				synchronized (this) {
-					boolean update;
+
+					boolean ret = false;
 					try {
 						outToClient.writeObject(updatePoint);
 						outToClient.flush();
-						update = inFromClient.readBoolean();
+						ret = inFromClient.readBoolean();
 					} catch (IOException e) {
 						e.printStackTrace();
-						return;
 					}
 
-					if (update) {
-						// Use this application thread to install the update
-						// This is unlike the normal case, where the updater thread installs the update
-						// But this behavior ensures that the update is installed at this exact update point
-						// Note that this thread is holding the write lock on RubahRuntime at this point,
-						// effectively locking out all other threads that are trying to reach an update point
-						Rubah.installNewVersion(this.options, this.installer);
-						try {
-							// Reach the update point after installing the update
-							// This throws an exception that gets propagated to application code
-							RubahRuntime.update(updatePoint);
-						} finally {
-							// The update exception gets "caught" here before being propagated up
-							// The updater thread will now wake and finish the update
-							this.notifyAll();
-						}
-					}
+					return ret;
 				}
 			}
 		}

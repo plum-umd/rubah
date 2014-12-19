@@ -20,48 +20,64 @@
  *******************************************************************************/
 package rubah.runtime.state;
 
-import rubah.RubahException;
+import java.io.IOException;
 
 
-public class ObservedNotUpdating extends NotUpdating {
 
-	private Observer observer;
+public class ObservedNotUpdating extends StoppingThreads {
 
-	public ObservedNotUpdating(UpdateState state, Observer observer) {
+	private boolean startedUpdate = false;
+
+	public ObservedNotUpdating(UpdateState state) {
 		super(state);
-		this.observer = observer;
 	}
 
 	@Override
 	public RubahState start() {
+		synchronized (this) {
+			while (!this.startedUpdate) {
+				try {
+					this.wait();
+				} catch(InterruptedException e) {
+					continue;
+				}
+			}
+		}
+
+		super.doStart();
 		return null;
 	}
 
 	@Override
-	protected void doClear() {
-		this.state.clear(false);
-	}
-
-	@Override
-	public void doStart() {
-		throw new Error("Should not be invoked");
-	}
-
-	@Override
 	public void update(String updatePoint) {
-		try {
-			this.observer.update(updatePoint);
-		} catch (RubahException e) {
-			// Rubah is not observed after an update
-			// To make it observable after the update, do not erase this line!
-			// Instead, in class rubah.runtime.state.States, make the update return to a ObservedNotUpdating after the update
-			// It is important that the threads restart with the flag observed set to false, so that they don't try to grab the write lock
-			this.state.setObserved(false);
-			throw e;
+		synchronized (this) {
+			if (this.startedUpdate)
+				super.update(updatePoint);
+			else if (this.state.getObserver().update(updatePoint)) {
+				this.startedUpdate = true;
+				this.notifyAll();
+				super.update(updatePoint);
+			}
 		}
 	}
 
-	public interface Observer {
-		public void update(String updatePoint);
+	@Override
+	public RubahState installUpdate(Installer installer, Options updateOptions) {
+		this.state.setInstaller(installer);
+		this.state.setOptions(updateOptions);
+
+		States.setObservedStates(this.state);
+
+		if (!updateOptions.isStopAndGo()) {
+
+			// Install new version
+			try {
+				installer.installVersion();
+			} catch (IOException e) {
+				throw new Error(e);
+			}
+		}
+
+		return this.state.getStates().moveToNextState();
 	}
 }

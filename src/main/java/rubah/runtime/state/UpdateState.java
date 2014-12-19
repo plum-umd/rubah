@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -46,7 +46,7 @@ public class UpdateState {
 	private HashedMap staticOffsets = new HashedMap();
 	private HashedMap staticBases 	= new HashedMap();
 
-	private boolean observed = false;
+	private Observer observer;
 
 	public Map<RubahThread, RubahThread> getRunning() {
 		return running;
@@ -156,14 +156,17 @@ public class UpdateState {
 		}
 	}
 
+	public interface Observer {
+		public boolean update(String updatePoint);
+	}
+
 	public Set<StoppedThreadPool> getStoppedThreadPool() {
 		return stoppedThreadPool;
 	}
-
-	public boolean isObserved() {
-		return observed;
+	public Observer getObserver() {
+		return observer;
 	}
-	public void setObserved(boolean observed) {
-		this.observed = observed;
+	public void setObserver(Observer observer) {
+		this.observer = observer;
 	}
 }

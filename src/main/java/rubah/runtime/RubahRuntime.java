@@ -29,9 +29,9 @@ import rubah.RubahThread;
 import rubah.runtime.classloader.RubahClassloader;
 import rubah.runtime.state.Installer;
 import rubah.runtime.state.NotUpdating;
-import rubah.runtime.state.ObservedNotUpdating.Observer;
 import rubah.runtime.state.Options;
 import rubah.runtime.state.RubahState;
+import rubah.runtime.state.UpdateState;
 
 public class RubahRuntime {
 	private static RubahState state = new NotUpdating();
@@ -71,20 +71,9 @@ public class RubahRuntime {
 	public static void update(String updatePoint) {
 		lock.readLock().lock();
 		try {
-			// When observed, an update might change the current state
-			// Grab a write lock instead of a read lock to avoid deadlocks
-			if (!state.isObserved()) {
-				state.update(updatePoint);
-				return;
-			}
-		} finally {
-			lock.readLock().unlock();
-		}
-		lock.writeLock().lock();
-		try {
 			state.update(updatePoint);
 		} finally {
-			lock.writeLock().unlock();
+			lock.readLock().unlock();
 		}
 //		// This yield helps breaking tight loops calling update,
 //		// which may never see the state changing due to it being cached
@@ -161,13 +150,7 @@ public class RubahRuntime {
 		return state.getClassBytes(className);
 	}
 
-	public static void observeState(Observer observer) {
-		lock.writeLock().lock();
-		try {
-			state.setObserved(true);
-			changeState(state.observeState(observer));
-		} finally {
-			lock.writeLock().unlock();
-		}
+	public static void observeState(UpdateState.Observer observer) {
+		changeState(state.observeState(observer));
 	}
 }

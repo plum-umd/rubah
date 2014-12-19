@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import rubah.RubahThread;
-import rubah.runtime.state.ObservedNotUpdating.Observer;
 
 public class NotUpdating extends RubahState {
 
@@ -92,7 +91,8 @@ public class NotUpdating extends RubahState {
 	}
 
 	@Override
-	public RubahState observeState(Observer observer) {
-		return new ObservedNotUpdating(this.state, observer);
+	public RubahState observeState(UpdateState.Observer observer) {
+		this.state.setObserver(observer);
+		return new ObservedNotUpdating(this.state);
 	}
 }
