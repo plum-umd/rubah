@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -53,11 +53,11 @@ public class RubahThread extends Thread {
 				else
 					this.target.run();
 			} catch (RubahException e) {
-				RubahRuntime.deregisterRunningThread(this, e);
 				registered = false;
-				restart = false;
-				while (!restart) {
-					synchronized (this) {
+				this.restart = false;
+				RubahRuntime.deregisterRunningThread(this, e);
+				synchronized (this) {
+					while (!restart) {
 						try {
 							this.wait();
 						} catch (java.lang.InterruptedException e1) {

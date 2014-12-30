@@ -20,6 +20,7 @@
  *******************************************************************************/
 package rubah.runtime.state;
 
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,7 +33,7 @@ import rubah.org.apache.commons.collections.map.HashedMap;
 import rubah.runtime.state.strategy.MigrationStrategy;
 
 public class UpdateState {
-	private Map<RubahThread, RubahThread> running;
+	private Map<RubahThread, RubahThread> running	 = Collections.synchronizedMap(new HashMap<RubahThread, RubahThread>());
 	private Installer installer;
 	private Map<String, ClassRedefinition> redefinitions;
 	private Set<StoppedThread> stopped 				 = new HashSet<StoppedThread>();
@@ -50,9 +51,6 @@ public class UpdateState {
 
 	public Map<RubahThread, RubahThread> getRunning() {
 		return running;
-	}
-	public void setRunning(Map<RubahThread, RubahThread> running) {
-		this.running = running;
 	}
 	public Installer getInstaller() {
 		return installer;

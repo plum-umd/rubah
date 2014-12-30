@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -24,7 +24,6 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.HashMap;
 
 import rubah.Rubah;
 import rubah.RubahException;
@@ -41,7 +40,7 @@ public class InstallingFirstVersion extends InstallingNewVersion {
 			final File updateDescriptor, final File jarFile,
 			final String... args) {
 		super(new UpdateState());
-		this.state.setRunning(new HashMap<RubahThread, RubahThread>());
+		this.state.getRunning().clear();
 		this.originalClassName = className;
 		this.args = args;
 		try {

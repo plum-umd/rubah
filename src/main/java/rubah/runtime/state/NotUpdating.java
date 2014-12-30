@@ -21,15 +21,12 @@
 package rubah.runtime.state;
 
 import java.io.IOException;
-import java.util.HashMap;
-
-import rubah.RubahThread;
 
 public class NotUpdating extends RubahState {
 
 	public NotUpdating() {
 		super(new UpdateState());
-		this.state.setRunning(new HashMap<RubahThread, RubahThread>());
+		this.state.getRunning().clear();
 	}
 
 	public NotUpdating(UpdateState state) {
