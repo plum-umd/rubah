@@ -39,7 +39,7 @@ public class RubahRuntime {
 	private static ReadWriteLock lock = new ReentrantReadWriteLock();
 
 	public static void changeState(RubahState newState) {
-		if (newState != null) {
+		while (newState != null) {
 			lock.writeLock().lock();
 			try {
 				state = newState;
@@ -47,7 +47,7 @@ public class RubahRuntime {
 				lock.writeLock().unlock();
 			}
 			System.out.println("Changing state to " + newState);
-			changeState(state.start());
+			newState = state.start();
 		}
 	}
 
@@ -150,7 +150,7 @@ public class RubahRuntime {
 		return state.getClassBytes(className);
 	}
 
-	public static void observeState(UpdateState.Observer observer) {
-		changeState(state.observeState(observer));
+	public static void observeState(Options options, Installer installer,UpdateState.Observer observer) {
+		changeState(state.observeState(installer, options, observer));
 	}
 }

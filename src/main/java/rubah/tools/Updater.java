@@ -204,11 +204,8 @@ public class Updater {
 						try {
 							if (observed) {
 								RubahRemoteObserver observer = new RubahRemoteObserver(outToClient, inFromClient);
-								while (true) {
-									// TODO handle observer disconnecting
-									RubahRuntime.observeState(observer);
-									Rubah.installNewVersion(options, installer);
-								}
+								// TODO handle observer disconnecting
+								RubahRuntime.observeState(options, installer, observer);
 							} else {
 								Rubah.installNewVersion(options, installer);
 							}

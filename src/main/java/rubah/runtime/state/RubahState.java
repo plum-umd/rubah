@@ -80,7 +80,7 @@ public abstract class RubahState {
 		throw new Error("Input not expected");
 	}
 
-	public RubahState observeState(UpdateState.Observer observer) {
+	public RubahState observeState(Installer installer, Options updateOptions, UpdateState.Observer observer) {
 		throw new Error("Input not expected");
 	}
 }

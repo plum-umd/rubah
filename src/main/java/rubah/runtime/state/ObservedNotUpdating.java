@@ -20,7 +20,6 @@
  *******************************************************************************/
 package rubah.runtime.state;
 
-import java.io.IOException;
 
 
 
@@ -34,6 +33,7 @@ public class ObservedNotUpdating extends StoppingThreads {
 
 	@Override
 	public RubahState start() {
+
 		synchronized (this) {
 			while (!this.startedUpdate) {
 				try {
@@ -45,7 +45,9 @@ public class ObservedNotUpdating extends StoppingThreads {
 		}
 
 		super.doStart();
-		return null;
+		States.setObservedStates(this.state);
+
+		return this.state.getStates().moveToNextState();
 	}
 
 	@Override
@@ -59,25 +61,5 @@ public class ObservedNotUpdating extends StoppingThreads {
 				super.update(updatePoint);
 			}
 		}
-	}
-
-	@Override
-	public RubahState installUpdate(Installer installer, Options updateOptions) {
-		this.state.setInstaller(installer);
-		this.state.setOptions(updateOptions);
-
-		States.setObservedStates(this.state);
-
-		if (!updateOptions.isStopAndGo()) {
-
-			// Install new version
-			try {
-				installer.installVersion();
-			} catch (IOException e) {
-				throw new Error(e);
-			}
-		}
-
-		return this.state.getStates().moveToNextState();
 	}
 }

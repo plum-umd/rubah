@@ -63,7 +63,7 @@ public class States {
 				new StoppingThreads(state),
 				new MigratingProgramState(state),
 				new MigratingControlFlow(state),
-				new NotUpdating(state)
+				new ObservedNotUpdating(state)
 				);
 		}
 
@@ -76,7 +76,7 @@ public class States {
 		if (state.getOptions().isStopAndGo()) {
 			states = new States(
 				new MigratingControlFlow(state),
-				new NotUpdating(state)
+				new ObservedNotUpdating(state)
 				);
 		} else if(state.getOptions().isLazy()) {
 			throw new Error("Not implemented");

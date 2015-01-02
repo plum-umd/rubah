@@ -51,7 +51,7 @@ public class NotUpdating extends RubahState {
 	public void doStart() {
 		throw new Error("Should not be invoked");
 	}
-	
+
 	@Override
 	public void update(String updatePoint) {
 		/* Empty */
@@ -88,8 +88,22 @@ public class NotUpdating extends RubahState {
 	}
 
 	@Override
-	public RubahState observeState(UpdateState.Observer observer) {
+	public RubahState observeState(Installer installer, Options updateOptions, UpdateState.Observer observer) {
 		this.state.setObserver(observer);
+
+		this.state.setInstaller(installer);
+		this.state.setOptions(updateOptions);
+
+		if (!updateOptions.isStopAndGo()) {
+
+			// Install new version
+			try {
+				installer.installVersion();
+			} catch (IOException e) {
+				throw new Error(e);
+			}
+		}
+
 		return new ObservedNotUpdating(this.state);
 	}
 }
