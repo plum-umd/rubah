@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -32,6 +32,7 @@ public class RubahIO {
 
 	private static class ThreadInterruptibleStatus {
 		boolean interruptible;
+		boolean interrupted;
 		Thread t;
 	}
 
@@ -52,11 +53,15 @@ public class RubahIO {
 		}
 	};
 
-	public static void registerBlockingIO() {
+	public static void registerBlockingIO() throws InterruptedException {
 		ThreadInterruptibleStatus status = interruptibleStatus.get();
 
 		synchronized (status) {
 			status.interruptible = true;
+			if (status.interrupted) {
+				status.interrupted = false;
+				throw new InterruptedException();
+			}
 		}
 	}
 
@@ -66,6 +71,7 @@ public class RubahIO {
 		synchronized (status) {
 			status.interruptible = false;
 			Thread.interrupted();
+			status.interrupted   = false;
 		}
 	}
 
@@ -77,7 +83,8 @@ public class RubahIO {
 						System.out.println("Interrupting thread " + status.t);
 						status.t.interrupt();
 					}
-					status.interruptible = false;
+					status.interruptible 	= false;
+					status.interrupted 		= true;
 				}
 			}
 		}

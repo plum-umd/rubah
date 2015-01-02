@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -110,7 +110,7 @@ public final class Rubah extends RubahRuntime {
 		}
 	}
 
-	public static void registerBlockingIO() {
+	public static void registerBlockingIO() throws InterruptedException {
 		RubahIO.registerBlockingIO();
 	}
 
