@@ -62,4 +62,15 @@ public class ObservedNotUpdating extends StoppingThreads {
 			}
 		}
 	}
+
+	@Override
+	public boolean isUpdating() {
+		return false;
+	}
+
+	@Override
+	public boolean isUpdateRequested() {
+		return this.startedUpdate;
+	}
+
 }
