@@ -84,11 +84,12 @@ public class MigratingControlFlow extends RubahState {
 		Thread thisThread = Thread.currentThread();
 		System.out.println("Thread " + thisThread + " reached update point \"" + updatePoint + "\"");
 
-		if (updatePoint.equals(this.migrating.get(thisThread))) {
-			this.stateLock.lock();
-			try {
+		this.stateLock.lock();
+		try {
+			if (this.updating && updatePoint.equals(this.migrating.get(thisThread))) {
 				this.migrating.remove(thisThread);
 				this.migratingChanged.signalAll();
+
 				while (this.updating) {
 					try {
 						this.allMigrated.await();
@@ -96,9 +97,11 @@ public class MigratingControlFlow extends RubahState {
 						continue;
 					}
 				}
-			} finally {
-				this.stateLock.unlock();
+			} else if (this.updating) {
+				System.out.println("Thread " + thisThread + " hit wrong update point: " + updatePoint + " (expecting " + this.migrating.get(thisThread) + ":" + updatePoint.equals(this.migrating.get(thisThread))  + ")");
 			}
+		} finally {
+			this.stateLock.unlock();
 		}
 		System.out.println("Thread " + thisThread + " released");
 	}
