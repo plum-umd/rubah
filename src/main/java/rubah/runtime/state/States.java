@@ -63,7 +63,7 @@ public class States {
 				new StoppingThreads(state),
 				new MigratingProgramState(state),
 				new MigratingControlFlow(state),
-				new ObservedNotUpdating(state)
+				new NotUpdating(state)
 				);
 		}
 
