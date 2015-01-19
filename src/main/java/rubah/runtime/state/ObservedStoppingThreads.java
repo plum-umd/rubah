@@ -24,6 +24,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import rubah.Rubah;
 import rubah.RubahException;
 import rubah.RubahThread;
 import rubah.io.RubahIO;
@@ -49,7 +50,7 @@ public class ObservedStoppingThreads extends RubahState {
 		// Interrupt threads waiting on IO
 		RubahIO.interruptThreads();
 
-		System.out.print("Waiting for threads ");
+		Rubah.getOut().print("Waiting for threads ");
 		this.state.printRunningThreads();
 		// This code is executed by an application thread
 		// Return null to stop that, the updater thread will call method restart after
@@ -69,7 +70,7 @@ public class ObservedStoppingThreads extends RubahState {
 			}
 
 			time = System.currentTimeMillis() - time;
-			System.out.println("Stopped " + this.state.getStopped().size() + " threads in " + time + "ms");
+			Rubah.getOut().println("Stopped " + this.state.getStopped().size() + " threads in " + time + "ms");
 			this.state.setStates(this.states);
 			RubahRuntime.changeState(states.moveToNextState());
 		} finally {
@@ -96,7 +97,7 @@ public class ObservedStoppingThreads extends RubahState {
 
 	@Override
 	public void update(String updatePoint) {
-		System.out.println("Thread " + Thread.currentThread() + " reached update point \"" + updatePoint + "\"");
+		Rubah.getOut().println("Thread " + Thread.currentThread() + " reached update point \"" + updatePoint + "\"");
 		throw new RubahException(updatePoint);
 	}
 

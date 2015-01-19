@@ -26,6 +26,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import rubah.Rubah;
 import rubah.runtime.state.UpdateState.StoppedThread;
 
 public class MigratingControlFlow extends RubahState {
@@ -42,7 +43,7 @@ public class MigratingControlFlow extends RubahState {
 
 	@Override
 	public void doStart() {
-		System.out.println("Restarting threads");
+		Rubah.getOut().println("Restarting threads");
 		this.stateLock.lock();
 		long time = System.currentTimeMillis();
 		int nThreads = this.state.getStopped().size();
@@ -61,7 +62,7 @@ public class MigratingControlFlow extends RubahState {
 				}
 			}
 
-			System.out.println("Control migration finished, notifying threads");
+			Rubah.getOut().println("Control migration finished, notifying threads");
 			// Program updated, notify all threads to proceed executing the new version
 			this.state.getStopped().clear();
 			this.updating = false;
@@ -69,7 +70,7 @@ public class MigratingControlFlow extends RubahState {
 		} finally {
 			this.stateLock.unlock();
 			time = System.currentTimeMillis() - time;
-			System.out.println("Restarted " + nThreads + " threads in " + time + "ms");
+			Rubah.getOut().println("Restarted " + nThreads + " threads in " + time + "ms");
 		}
 	}
 
@@ -82,7 +83,7 @@ public class MigratingControlFlow extends RubahState {
 	@Override
 	public void update(String updatePoint) {
 		Thread thisThread = Thread.currentThread();
-		System.out.println("Thread " + thisThread + " reached update point \"" + updatePoint + "\"");
+		Rubah.getOut().println("Thread " + thisThread + " reached update point \"" + updatePoint + "\"");
 
 		this.stateLock.lock();
 		try {
@@ -98,12 +99,12 @@ public class MigratingControlFlow extends RubahState {
 					}
 				}
 			} else if (this.updating) {
-				System.out.println("Thread " + thisThread + " hit wrong update point: " + updatePoint + " (expecting " + this.migrating.get(thisThread) + ":" + updatePoint.equals(this.migrating.get(thisThread))  + ")");
+				Rubah.getOut().println("Thread " + thisThread + " hit wrong update point: " + updatePoint + " (expecting " + this.migrating.get(thisThread) + ":" + updatePoint.equals(this.migrating.get(thisThread))  + ")");
 			}
 		} finally {
 			this.stateLock.unlock();
 		}
-		System.out.println("Thread " + thisThread + " released");
+		Rubah.getOut().println("Thread " + thisThread + " released");
 	}
 
 	@Override

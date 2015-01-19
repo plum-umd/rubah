@@ -28,6 +28,8 @@ import java.nio.channels.SocketChannel;
 import java.util.HashSet;
 import java.util.Set;
 
+import rubah.Rubah;
+
 public class RubahIO {
 
 	private static class ThreadInterruptibleStatus {
@@ -80,7 +82,7 @@ public class RubahIO {
 			for (ThreadInterruptibleStatus status : threads) {
 				synchronized (status) {
 					if (status.interruptible) {
-						System.out.println("Interrupting thread " + status.t);
+						Rubah.getOut().println("Interrupting thread " + status.t);
 						status.t.interrupt();
 					}
 					status.interruptible 	= false;

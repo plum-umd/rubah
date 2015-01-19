@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import rubah.Rubah;
 import rubah.RubahException;
 import rubah.RubahThread;
 import rubah.runtime.classloader.RubahClassloader;
@@ -46,7 +47,7 @@ public class RubahRuntime {
 			} finally {
 				lock.writeLock().unlock();
 			}
-			System.out.println("Changing state to " + newState);
+			Rubah.getOut().println("Changing state to " + newState);
 			newState = state.start();
 		}
 	}

@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -24,6 +24,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import rubah.Rubah;
 import rubah.RubahException;
 import rubah.RubahThread;
 import rubah.io.RubahIO;
@@ -45,7 +46,7 @@ public class StoppingThreads extends RubahState {
 		// Interrupt threads waiting on IO
 		RubahIO.interruptThreads();
 
-		System.out.print("Waiting for threads ");
+		Rubah.getOut().print("Waiting for threads ");
 		this.state.printRunningThreads();
 		// Wait untill all threads reach an update point
 		this.stateLock.lock();
@@ -63,7 +64,7 @@ public class StoppingThreads extends RubahState {
 		}
 
 		time = System.currentTimeMillis() - time;
-		System.out.println("Stopped " + this.state.getStopped().size() + " threads in " + time + "ms");
+		Rubah.getOut().println("Stopped " + this.state.getStopped().size() + " threads in " + time + "ms");
 	}
 
 
@@ -97,7 +98,7 @@ public class StoppingThreads extends RubahState {
 
 	@Override
 	public void update(String updatePoint) {
-		System.out.println("Thread " + Thread.currentThread() + " reached update point \"" + updatePoint + "\"");
+		Rubah.getOut().println("Thread " + Thread.currentThread() + " reached update point \"" + updatePoint + "\"");
 		throw new RubahException(updatePoint);
 	}
 

@@ -24,10 +24,13 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+
+import org.apache.commons.io.output.NullOutputStream;
 
 import rubah.io.InterruptedException;
 import rubah.io.RubahIO;
@@ -39,8 +42,15 @@ import rubah.tools.BootstrapJarProcessor;
 import rubah.tools.Updater;
 
 public final class Rubah extends RubahRuntime {
+	private static final String VERBOSE_OUT = "rubahVerbose";
+	private static PrintStream out = new PrintStream(new NullOutputStream());
+
 	private Rubah() {
 		throw new Error("This class is not supposed to be instantiated");
+	}
+
+	public static PrintStream getOut() {
+		return out;
 	}
 
 	public static void update(String updatePoint) {
@@ -56,6 +66,9 @@ public final class Rubah extends RubahRuntime {
 	}
 
 	public static void main(String[] args) {
+
+		if (System.getProperty(VERBOSE_OUT) != null)
+			out = System.out;
 
 		try {
 			BootstrapJarProcessor.readBootstrapMetaInfo(VersionManager.getDefaultNamespace());

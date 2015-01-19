@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import rubah.Rubah;
 import rubah.RubahThread;
 import rubah.org.apache.commons.collections.map.HashedMap;
 import rubah.runtime.state.strategy.MigrationStrategy;
@@ -100,7 +101,7 @@ public class UpdateState {
 			}
 		}
 
-		System.out.println(runningThreads);
+		Rubah.getOut().println(runningThreads);
 	}
 	public States getStates() {
 		return this.states;
