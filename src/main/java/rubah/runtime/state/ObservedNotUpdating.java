@@ -20,6 +20,8 @@
  *******************************************************************************/
 package rubah.runtime.state;
 
+import rubah.RubahThread;
+
 
 
 
@@ -51,11 +53,17 @@ public class ObservedNotUpdating extends StoppingThreads {
 	}
 
 	@Override
+	public void registerRunningThread(RubahThread t) {
+		this.state.getObserver().startedThread(Thread.currentThread().getId());
+		super.registerRunningThread(t);
+	}
+
+	@Override
 	public void update(String updatePoint) {
 		synchronized (this) {
 			if (this.startedUpdate)
 				super.update(updatePoint);
-			else if (this.state.getObserver().update(updatePoint)) {
+			else if (this.state.getObserver().update(Thread.currentThread().getId(), updatePoint)) {
 				this.startedUpdate = true;
 				this.notifyAll();
 				super.update(updatePoint);

@@ -117,7 +117,9 @@ public class Updater {
 	}
 
 	public static interface Observer {
-		public boolean update(String updatePoint);
+		public void    startedThread(long threadID);
+
+		public boolean update(long threadID, String updatePoint);
 	}
 
 	public static void addObserver(Type type, Options options, final Observer observer) {
@@ -136,10 +138,29 @@ public class Updater {
 				@Override
 				public void run() {
 					while (!clientSocket.isClosed()) {
+
 						try {
-							String updatePoint = (String) inFromServer.readObject();
-							boolean update = observer.update(updatePoint);
-							outToServer.writeBoolean(update);
+							RubahRemoteObserver.Operation op = (RubahRemoteObserver.Operation) inFromServer.readObject();
+
+							switch (op) {
+								case UPDATE:
+								{
+									String updatePoint = (String) inFromServer.readObject();
+									long threadID = inFromServer.readLong();
+									boolean update = observer.update(threadID, updatePoint);
+									outToServer.writeBoolean(update);
+									break;
+								}
+								case THREAD:
+								{
+									long threadID = inFromServer.readLong();
+									observer.startedThread(threadID);
+									outToServer.write(0); // Acknowledge
+									break;
+								}
+								default:
+									throw new Error("Operation " + op + " not supported");
+							}
 							outToServer.flush();
 						} catch (ClassNotFoundException | IOException e) {
 							e.printStackTrace();
@@ -214,7 +235,7 @@ public class Updater {
 							e.printStackTrace();
 							continue;
 						}
-					} catch (ClassNotFoundException e) {
+					} catch (ClassNotFoundException | IOException e) {
 						System.out.println(e);
 						e.printStackTrace();
 						continue;
@@ -224,36 +245,55 @@ public class Updater {
 				throw new Error(e);
 			}
 		}
-
-		private static class RubahRemoteObserver implements rubah.runtime.state.UpdateState.Observer {
-			private final ObjectOutputStream outToClient;
-			private final ObjectInputStream  inFromClient;
-
-			public RubahRemoteObserver(ObjectOutputStream outToClient, ObjectInputStream inFromClient) {
-				this.outToClient  = outToClient;
-				this.inFromClient = inFromClient;
-			}
-
-			@Override
-			public boolean update(String updatePoint) {
-				synchronized (this) {
-
-					boolean ret = false;
-					try {
-						outToClient.writeObject(updatePoint);
-						outToClient.flush();
-						ret = inFromClient.readBoolean();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-
-					return ret;
-				}
-			}
-		}
 	}
 
 	public static void listen() {
 		new ListenerThread(LISTENER_THREAD_NAME).start();
+	}
+
+	private static class RubahRemoteObserver implements rubah.runtime.state.UpdateState.Observer {
+		private final ObjectOutputStream outToClient;
+		private final ObjectInputStream  inFromClient;
+
+		private enum  Operation { UPDATE, THREAD };
+
+		public RubahRemoteObserver(ObjectOutputStream outToClient, ObjectInputStream inFromClient) {
+			this.outToClient  = outToClient;
+			this.inFromClient = inFromClient;
+		}
+
+		@Override
+		public boolean update(long threadID, String updatePoint) {
+			synchronized (this) {
+
+				boolean ret = false;
+				try {
+					outToClient.writeObject(Operation.UPDATE);
+					outToClient.writeObject(updatePoint);
+					outToClient.writeLong(threadID);
+					outToClient.flush();
+					ret = inFromClient.readBoolean();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				return ret;
+			}
+		}
+
+		@Override
+		public void startedThread(long threadID) {
+			synchronized (this) {
+
+				try {
+					outToClient.writeObject(Operation.THREAD);
+					outToClient.writeLong(threadID);
+					outToClient.flush();
+					inFromClient.read(); // Wait for client to acknowledge
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 }

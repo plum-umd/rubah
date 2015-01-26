@@ -156,7 +156,8 @@ public class UpdateState {
 	}
 
 	public interface Observer {
-		public boolean update(String updatePoint);
+		public void    startedThread(long threadID);
+		public boolean update(long threadID, String updatePoint);
 	}
 
 	public Set<StoppedThreadPool> getStoppedThreadPool() {
