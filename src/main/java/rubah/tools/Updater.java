@@ -60,6 +60,28 @@ public class Updater {
 	}
 
 	public static void main(String[] args) {
+		UpdateTypeOptions typeOptions = parseArgs(args);
+
+		try (Socket clientSocket = new Socket(InetAddress.getLocalHost(), Updater.port)) {
+			installUpdate(typeOptions.type, typeOptions.options, clientSocket);
+	    } catch (Exception e) {
+	        System.err.println("Client Error: " + e.getMessage());
+	        System.err.println("Localized: " + e.getLocalizedMessage());
+	        System.err.println("Stack Trace: " + e.getStackTrace());
+	    }
+	}
+
+	public static final class UpdateTypeOptions {
+		public final Type type;
+		public final Options options;
+
+		public UpdateTypeOptions(Type type, Options options) {
+			this.type = type;
+			this.options = options;
+		}
+	}
+
+	public static UpdateTypeOptions parseArgs(String[] args) {
 		UpdateState state = new UpdateState();
 		state.setCommandLine(args);
 
@@ -98,13 +120,7 @@ public class Updater {
 			.setLazy(state.isLazy());
 		}
 
-		try (Socket clientSocket = new Socket(InetAddress.getLocalHost(), Updater.port)) {
-			installUpdate(type, options, clientSocket);
-	    } catch (Exception e) {
-	        System.err.println("Client Error: " + e.getMessage());
-	        System.err.println("Localized: " + e.getLocalizedMessage());
-	        System.err.println("Stack Trace: " + e.getStackTrace());
-	    }
+		return new UpdateTypeOptions(type, options);
 	}
 
 	public enum Type { v0v0, v0v1 }
@@ -163,7 +179,14 @@ public class Updater {
 									throw new Error("Operation " + op + " not supported");
 							}
 							outToServer.flush();
-						} catch (ClassNotFoundException | IOException e) {
+						} catch (IOException e) {
+							try {
+								clientSocket.close();
+							} catch (IOException e1) {
+								// Don't care
+							}
+							break;
+						} catch (ClassNotFoundException e) {
 							e.printStackTrace();
 							continue;
 						}

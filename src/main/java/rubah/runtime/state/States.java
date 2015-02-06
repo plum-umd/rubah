@@ -81,7 +81,13 @@ public class States {
 		} else if(state.getOptions().isLazy()) {
 			throw new Error("Not implemented");
 		} else {
-			throw new Error("Not implemented");
+			states = new States(
+				new InstallingNewVersion(state),
+				new ComputingUpdateMetadata(state),
+				new MigratingProgramState(state),
+				new MigratingControlFlow(state),
+				new ObservedNotUpdating(state)
+				);
 		}
 
 		state.setStates(states);
