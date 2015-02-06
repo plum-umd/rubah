@@ -21,6 +21,7 @@
 package rubah.runtime.state;
 
 import rubah.RubahThread;
+import rubah.runtime.state.UpdateState.Observer.Action;
 
 
 
@@ -63,10 +64,29 @@ public class ObservedNotUpdating extends StoppingThreads {
 		synchronized (this) {
 			if (this.startedUpdate)
 				super.update(updatePoint);
-			else if (this.state.getObserver().update(Thread.currentThread().getId(), updatePoint)) {
-				this.startedUpdate = true;
-				this.notifyAll();
-				super.update(updatePoint);
+			else {
+				Action a = this.state.getObserver().update(Thread.currentThread().getId(), updatePoint);
+				switch (a) {
+					case UPDATE:
+						this.startedUpdate = true;
+						this.notifyAll();
+						super.update(updatePoint);
+						break;
+					case NOT_UPDATE:
+						break;
+					case WAIT:
+						while (!this.startedUpdate) {
+							try {
+								this.wait();
+							} catch (InterruptedException e) {
+								continue;
+							}
+						}
+						super.update(updatePoint);
+						break;
+					default:
+						throw new Error("Action " + a + " not supported");
+				}
 			}
 		}
 	}

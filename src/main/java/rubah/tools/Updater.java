@@ -35,6 +35,7 @@ import rubah.runtime.RubahRuntime;
 import rubah.runtime.VersionManager;
 import rubah.runtime.state.Installer;
 import rubah.runtime.state.Options;
+import rubah.runtime.state.UpdateState.Observer.Action;
 import rubah.tools.updater.ParsingArguments;
 import rubah.tools.updater.UpdateState;
 import rubah.update.FileUpdateClass;
@@ -119,7 +120,7 @@ public class Updater {
 	public static interface Observer {
 		public void    startedThread(long threadID);
 
-		public boolean update(long threadID, String updatePoint);
+		public Action update(long threadID, String updatePoint);
 	}
 
 	public static void addObserver(Type type, Options options, final Observer observer) {
@@ -147,8 +148,8 @@ public class Updater {
 								{
 									String updatePoint = (String) inFromServer.readObject();
 									long threadID = inFromServer.readLong();
-									boolean update = observer.update(threadID, updatePoint);
-									outToServer.writeBoolean(update);
+									Action update = observer.update(threadID, updatePoint);
+									outToServer.writeObject(update);
 									break;
 								}
 								case THREAD:
@@ -263,17 +264,17 @@ public class Updater {
 		}
 
 		@Override
-		public boolean update(long threadID, String updatePoint) {
+		public Action update(long threadID, String updatePoint) {
 			synchronized (this) {
 
-				boolean ret = false;
+				Action ret = Action.NOT_UPDATE;
 				try {
 					outToClient.writeObject(Operation.UPDATE);
 					outToClient.writeObject(updatePoint);
 					outToClient.writeLong(threadID);
 					outToClient.flush();
-					ret = inFromClient.readBoolean();
-				} catch (IOException e) {
+					ret = (Action) inFromClient.readObject();
+				} catch (IOException | ClassNotFoundException e) {
 					e.printStackTrace();
 				}
 

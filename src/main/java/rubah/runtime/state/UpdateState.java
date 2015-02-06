@@ -156,8 +156,9 @@ public class UpdateState {
 	}
 
 	public interface Observer {
+		public enum	   Action { UPDATE, NOT_UPDATE, WAIT };
 		public void    startedThread(long threadID);
-		public boolean update(long threadID, String updatePoint);
+		public Action  update(long threadID, String updatePoint);
 	}
 
 	public Set<StoppedThreadPool> getStoppedThreadPool() {
