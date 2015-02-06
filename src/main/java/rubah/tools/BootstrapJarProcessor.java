@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -186,6 +186,10 @@ public class BootstrapJarProcessor extends ReadWriteTool implements Opcodes {
 //							new FrontierClassGenerator(c, new Version(new DelegatingNamespace(namespace, new HashSet<String>()))).generateProxy());
 
 					String proxyName = ProxyGenerator.generateProxyName(c.getFqn());
+
+					Clazz p = namespace.getClass(Type.getObjectType(proxyName.replace(".", "/")));
+					p.setParent(c);
+					bootstrapClasses.add(new ClassData(p));
 
 					System.out.println(proxyName);
 					// Generate proxies a-priori because namespaces are protected

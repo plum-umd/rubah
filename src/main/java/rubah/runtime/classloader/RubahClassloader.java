@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -126,10 +126,7 @@ public class RubahClassloader extends ClassLoader implements Opcodes {
 		if (ret != null) {
 			// Do nothing
 		} else if (className.startsWith("rubah.") ||
-				className.startsWith("java") ||
-//				className.startsWith("com.sun.jna") ||
-				className.startsWith("org.xml.sax") ||
-				className.startsWith("sun")) {
+				VersionManager.getDefaultNamespace().isBootstrap(className)) {
 			ret = super.loadClass(className, resolve);
 			resolve = false;
 		} else if (className.startsWith(PureConversionClassLoader.PURE_CONVERSION_PREFFIX)) {

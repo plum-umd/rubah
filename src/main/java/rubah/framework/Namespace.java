@@ -2,7 +2,7 @@
  *  	Copyright 2014,
  *  		Luis Pina <luis@luispina.me>,
  *  		Michael Hicks <mwh@cs.umd.edu>
- *  	
+ *
  *  	This file is part of Rubah.
  *
  *     Rubah is free software: you can redistribute it and/or modify
@@ -87,5 +87,14 @@ public class Namespace {
 
 	public boolean isBootstrap(Clazz c) {
 		return this.bootstrapClasses.contains(c);
+	}
+
+	public boolean isBootstrap(String className) {
+		Clazz c = this.definedClasses.get(className);
+
+		if (c != null)
+			return this.bootstrapClasses.contains(c);
+
+		return false;
 	}
 }
