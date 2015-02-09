@@ -41,12 +41,18 @@ public class RubahThread extends Thread {
 		this.target = r;
 	}
 
+
+	@Override
+	public synchronized void start() {
+		Rubah.registerRunningThread(this);
+		super.start();
+	}
+
 	@Override
 	public void run() {
 		boolean registered = false;
 		while (!registered) {
 			try {
-				Rubah.registerRunningThread(this);
 				registered = true;
 				if (this.target instanceof RubahThread)
 					((RubahThread)this.target).rubahRun();
@@ -64,6 +70,7 @@ public class RubahThread extends Thread {
 							continue;
 						}
 					}
+					Rubah.registerRunningThread(this);
 				}
 				continue;
 			} catch (Throwable e) {
