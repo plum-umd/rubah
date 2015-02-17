@@ -65,6 +65,7 @@ public class AddTraverseMethod extends RubahTransformer {
 		Rubah.class.getPackage().getName() + ".",
 		ThreadLocal.class.getName(),
 		Object.class.getPackage().getName(),
+		"sun.security",
 		"sun.nio.ch.SocketChannelImpl",
 		"sun.nio.ch.SocketAdaptor",
 		"com.sun.proxy",
