@@ -159,6 +159,7 @@ public class UpdateState {
 		public enum	   Action { UPDATE, NOT_UPDATE, WAIT };
 		public void    startedThread(long threadID);
 		public Action  update(long threadID, String updatePoint);
+		public void    observerReady();
 	}
 
 	public Set<StoppedThreadPool> getStoppedThreadPool() {

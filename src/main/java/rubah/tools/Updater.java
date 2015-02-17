@@ -139,7 +139,7 @@ public class Updater {
 		public Action update(long threadID, String updatePoint);
 	}
 
-	public static void addObserver(Type type, Options options, final Observer observer) {
+	public static Socket addObserver(Type type, Options options, final Observer observer) {
 		Socket cs = null;
 		try {
 			final Socket clientSocket = new Socket(InetAddress.getLocalHost(), Updater.port);
@@ -150,6 +150,9 @@ public class Updater {
 	        outToServer.writeBoolean(true);
 	        outToServer.writeObject(type);
 	        outToServer.writeObject(options);
+
+	        // Wait for the server to change state to observed
+	        inFromServer.readBoolean();
 
 	        Thread t = new Thread(){
 				@Override
@@ -201,12 +204,16 @@ public class Updater {
 				cs.close();
 			} catch (IOException e1) {
 				// Don't really care
+			} finally {
+				cs = null;
 			}
 
 	        System.err.println("Client Error: " + e.getMessage());
 	        System.err.println("Localized: " + e.getLocalizedMessage());
 	        System.err.println("Stack Trace: " + e.getStackTrace());
 	    }
+
+		return cs;
 	}
 
 	private static class ListenerThread extends Thread {
@@ -278,6 +285,7 @@ public class Updater {
 	private static class RubahRemoteObserver implements rubah.runtime.state.UpdateState.Observer {
 		private final ObjectOutputStream outToClient;
 		private final ObjectInputStream  inFromClient;
+		private boolean ready = false;
 
 		private enum  Operation { UPDATE, THREAD };
 
@@ -314,6 +322,22 @@ public class Updater {
 					outToClient.writeLong(threadID);
 					outToClient.flush();
 					inFromClient.read(); // Wait for client to acknowledge
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+
+		@Override
+		public void observerReady() {
+			synchronized (this) {
+				if (ready)
+					return;
+
+				try {
+					outToClient.writeBoolean(true);
+					outToClient.flush();
+					ready = true;
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

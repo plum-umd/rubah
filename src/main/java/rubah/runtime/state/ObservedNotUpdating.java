@@ -37,6 +37,9 @@ public class ObservedNotUpdating extends StoppingThreads {
 	@Override
 	public RubahState start() {
 
+		// Let the client know that the observer is ready
+		this.state.getObserver().observerReady();
+
 		synchronized (this) {
 			while (!this.startedUpdate) {
 				try {
